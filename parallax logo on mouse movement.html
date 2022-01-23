@@ -1,0 +1,97 @@
+<html>
+<head> <title>Test</title>
+<style>
+ 	#background{position:fixed;} 
+
+	#logobox{position:fixed; left:50%; top:50%; 	transform: translate(-50%, -50%); z-index:100;} 
+		 
+	
+</style>
+</head>
+<body>
+	<div id="logobox"><img id="image" src="https://i0.wp.com/uozzart.com/wp-content/uploads/2020/08/Gioconda-3-1.jpg?resize=1536%2C1248&ssl=1" width="200" ></div>
+	
+</body>
+<script>
+
+class RotateOnMouse{
+	
+	constructor(properties) {
+		this.id=properties.id;
+		this.obj=document.getElementById(this.id);
+		this.container = document.createElement("div");
+		this.shadowColor=properties.shadowColor;
+		this.shadowBlur=properties.shadowBlur;
+		 this.setupdiv();
+		
+		if (properties.swing==true) this.swing(); 
+		if (properties.mouse==true) this.register(); 
+		 
+	}
+	
+	setupdiv(){
+		
+		this.container.setAttribute('id','RotateOnMouse-container-'+this.id);
+		this.obj.style.filter= 'drop-shadow(1px 5px '+this.shadowBlur+' '+this.shadowColor+')';
+		console.log(this.obj.style.filter);
+		this.obj.style.transition='transform .2s linear, filter 0.2s linear';
+		
+		parent=this.obj.parentNode;
+		parent.insertBefore(this.container, this.obj);
+		this.container.appendChild(this.obj);
+	}
+	
+	getCenter(targetNode){
+		let bounding_rect=targetNode.getBoundingClientRect();
+		let centerX = bounding_rect.left + bounding_rect.width / 2;
+		let centerY = bounding_rect.top + bounding_rect.height / 2;
+		return {x:centerX,y:centerY};
+	}
+	
+	mousemove(e) {
+		let mousecoords={x:e.clientX,y:e.clientY};
+		let center_objcords=this.getCenter(this.container);
+		let diffX=mousecoords.x-center_objcords.x;
+		let diffY=mousecoords.y-center_objcords.y;
+		let tiltx=diffY / center_objcords.y;
+		let tilty=diffX / center_objcords.x;
+		let radius = Math.sqrt(Math.pow(tiltx, 2) + Math.pow(tilty, 2));
+		let degree = (radius * 15);
+		let shadx = degree*tiltx;   /*horizontal shadow*/
+		let shady = degree*tilty;   /*vertical shadow*/
+		
+		this.obj.style.transform='rotate3d(' + tiltx + ', ' + (-tilty) + ', 0, ' + degree + 'deg)';
+		if(diffX<center_objcords.x) {/*without that horizontal values are reversed*/
+			this.obj.style.filter= 'drop-shadow( '+ (-shady) + 'px ' + (-shadx)+'px '+this.shadowBlur+' '+this.shadowColor+')';}
+		else { this.obj.style.filter= 'drop-shadow('+shady + 'px ' + (-shadx)+'px '+this.shadowBlur+' '+this.shadowColor+')';}
+	};
+
+swing(){
+	const style = document.createElement('style');
+	style.innerHTML = `
+			#${this.container.id}.swing{
+			animation-name: swing;
+	  		animation-duration: 6s;
+	  		animation-iteration-count: infinite;
+			}
+	
+			@keyframes swing {
+  			0%   {transform:rotate3d(-.2,-.5,0,-10deg)}
+  			50% {transform:rotate3d(.2,-.5,0,10deg)}
+			100%   {transform:rotate3d(-.2,-.5,0,-10deg)}
+			} 
+		`;
+	document.head.appendChild(style);
+	this.container.classList.add('swing');
+}
+
+register(){
+	const isso = this;
+	document.addEventListener('mousemove', function(e){isso.mousemove(e)});
+	}
+}
+
+
+movinglogo=new RotateOnMouse({id:'image',shadowColor:'#333',shadowBlur:'20px',swing:true, mouse:false});
+</script></html>
+
