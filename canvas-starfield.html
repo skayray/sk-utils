@@ -1,0 +1,176 @@
+<html>
+	
+<head> <title>Test</title>
+<script src="https://cdn.jsdelivr.net/npm/tweakpane@3.0.7/dist/tweakpane.min.js"></script>
+
+</head>
+<style>nav {background: #000;color:#fff; font-family: calibri; padding:0 1px; margin-bottom:2px; display:flex;   gap: 12px; }
+	nav a{cursor:pointer; }
+	canvas{margin: auto; position:absolute; top:70px}
+</style>
+<body style="background:#000">
+<div style="width:100vw"><canvas id="sketch" style="display:block;margin:auto;  border:solid 1px #dedede;" width=300 height="300" ></canvas>
+</div>
+<script src="utils.js"></script>
+
+<script>
+const params={ radius:1, speed:.5}
+
+
+class Vector {
+	constructor(x, y, width) {
+		this.x = x;
+		this.y = y;
+		this.w = width;
+	}
+}	
+
+
+
+class Agent{
+	constructor(x,y,width,cerchius_radius){
+		 this.pos=new Vector (x,y,width);
+		 this.angle=randomRange(1,10); //la posizione del punto nell'arco
+		 this.cerchius_radius=cerchius_radius;
+		 this.color=randomColor();
+		 this.scale=1;
+
+	}
+	
+	
+	
+	draw_point(context){
+	context.save();
+	// context.lineWidth=this.lineWidth;
+	context.strokeStyle=this.color;
+	context.translate(this.pos.x, this.pos.y);
+	
+	
+	context.scale(this.scale,this.scale);
+	context.rotate(-this.angle);
+	context.beginPath();
+	gradient=context.createRadialGradient(this.cerchius_radius, this.cerchius_radius, 0, this.cerchius_radius, this.cerchius_radius, this.pos.w);
+	gradient.addColorStop(0, '#ffffff');
+	gradient.addColorStop(0.3, this.color);
+	gradient.addColorStop(1,'#00000000');
+	context.globalCompositeOperation='screen';
+	context.fillStyle=gradient;
+	context.arc(this.cerchius_radius,this.cerchius_radius,this.pos.w,0, 2*Math.PI);
+	  context.fill();
+	context.restore();
+	}
+	 
+	
+	update(shape) {
+		
+		switch (shape) {
+			case 'points':
+			 this.cerchius_radius+=params.speed;
+			  this.pos.w+=params.speed*.05;
+			break;
+
+		}
+	}
+}
+	
+
+	canv=document.querySelector('#sketch');
+	canv.width=canv.width*2; 
+	canv.height=canv.height*2; 
+	width=canv.width;
+	height=canv.height;
+	context=canv.getContext('2d');
+	context.fillStyle = "#000000";
+	context.fillRect(0,0,width,height);
+	context.save();
+	const cx=width*.5;
+	const cy=height*.5;
+	let x,y;
+	let agent;
+	let agents = [];
+	let reset_backg=1;
+	let stop=0;
+	let gradient;
+	let cerchius_radius;
+	let max_points;
+	
+	generate_agents();
+	
+	function generate_agents(){
+	max_points=0;
+	for (j=0;j<width/2;j++){	
+	agents.push(new Agent(cx,cy,params.radius,j*50));
+	max_points+=1
+	}
+	}
+	
+	function destroy_agents(id){
+	agents.splice(id,1);
+	// console.log(agents.length);
+	}
+	
+
+ function points(){
+	 if (reset_backg==1){
+	  context.fillStyle = '#000';
+	   context.fillRect(0, 0, width, height);
+	 }
+	 
+	 agents.forEach((agent,index) => {
+	 agent.update('points');
+	 if (agents.length<max_points ){
+		  generate_agents();
+		  
+	  }
+	 if (agent.cerchius_radius>width/2){ destroy_agents(index);}
+	 
+	 agent.draw_point(context);
+ });
+ }
+
+
+const animate = () => {
+	   // circle();
+	 points();
+	 if(stop==0){
+	requestAnimationFrame(animate);
+	}
+};
+ animate();
+	
+</script>
+
+
+<script>
+
+
+const createpane=()=>{
+const pane = new Tweakpane.Pane();
+let folder;
+folder=pane.addFolder({title:'Control'});
+folder.addInput(params,'radius',{min:0, max:width/6,step:.2 });
+folder.addInput(params,'speed',{min:0, max:4,step:.1 });
+const btn = folder.addButton({
+  title: 'Play/Pause',
+});
+const generate = folder.addButton({
+  title: 'Generate circle',
+});
+const reset_bg = folder.addButton({
+  title: 'Reset background each iteration',
+});
+btn.on('click',function(){
+	if(stop==1){stop=0;animate();}else{stop=1; }
+});
+generate.on('click',function(){
+	generate_agents();
+});
+reset_bg.on('click',function(){
+if(reset_backg==1){reset_backg=0;}else{reset_backg=1; }
+});
+
+}
+createpane();
+</script>	
+</body>
+</html>
